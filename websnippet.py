@@ -10,7 +10,7 @@ app = Quart(__name__)
 README = """
 # Snippet Extractor
 
-This service allows you to extract specific elements from a web page based on CSS selectors and optionally inject custom JavaScript.
+This service allows you to extract specific elements from a web page based on CSS selectors and optionally inject custom JavaScript. In addition to selected elements, parent elements are included (but not siblings).
 
 It loads the page with Chromium and returns the page after JS rendering, so is more likely to be correct than basic scrapers.
 
