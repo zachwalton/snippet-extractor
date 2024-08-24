@@ -94,29 +94,35 @@ FETCH="""
 // Save the original fetch function
 const originalFetch = window.fetch;
 
-window.fetch = async function (input, init) {
+window.fetch = async function (input, init) {{
     // Determine the URL (input can be a Request object or a URL string)
     let url = input instanceof Request ? input.url : input;
 
     // Check if the URL is relative (doesn't start with http:// or https://)
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {{
         // Get the current origin
         const origin = window.location.origin;
 
         // Construct the fully qualified URL
-        url = new URL(url, {base_url}).href;
-    }
+        const fullUrl = new URL(url, "{base_url}").href;
+
+        // Encode the full URL
+        const encodedUrl = encodeURIComponent(fullUrl);
+
+        // Construct the final URL with corsproxy
+        url = `https://corsproxy.io/?${{encodedUrl}}`;
+    }}
 
     // If input was a Request object, clone it with the new URL
-    if (input instanceof Request) {
+    if (input instanceof Request) {{
         input = new Request(url, input);
-    } else {
+    }} else {{
         input = url;
-    }
+    }}
 
     // Call the original fetch function with the modified input
     return originalFetch(input, init);
-};
+}};
 
 """
 
@@ -225,7 +231,7 @@ async def extract():
     # Patch fetch
     script_tag = soup.new_tag('script')
     script_tag.string = FETCH.format(base_url=base_url)
-    soup.body.append(script_tag)
+    soup.head.append(script_tag)
 
     # Return the extracted elements as valid HTML
     return soup.prettify(), 200
