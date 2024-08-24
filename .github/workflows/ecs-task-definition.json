@@ -1,0 +1,57 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:242201271572:task-definition/websnippet:1",
+    "containerDefinitions": [
+        {
+            "name": "websnippet",
+            "image": "zachwalton/websnippet",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "websnippet",
+                    "containerPort": 5001,
+                    "hostPort": 5001,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "systemControls": []
+        }
+    ],
+    "family": "websnippet",
+    "executionRoleArn": "arn:aws:iam::242201271572:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2024-08-24T06:02:46.019Z",
+    "registeredBy": "arn:aws:iam::242201271572:root",
+    "tags": []
+}
