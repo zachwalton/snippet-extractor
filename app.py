@@ -17,7 +17,7 @@ It loads the page with Chromium and returns the page after JS rendering, so is m
 
 It also replaces relative links with links to the destination domain, proxied through [corsproxy.io](https://corsproxy.io) to work around CORS errors.
 
-Finally, it patches `window.fetch` to send relative requests to the upstream domain.
+Finally, it patches `window.fetch` to send relative requests to the upstream domain, and has some other neat tricks like loading window.location.hash from the upstream URL for triggering behavior in PWAs.
 
 ## Endpoints
 
@@ -90,7 +90,13 @@ STYLES = """
 </style>
 """
 
-FETCH="""
+INJECT="""
+// First replace the hash with the hash from the upstream URL, if it exists
+let url = new URL("{url}");
+if (url.hash.length > 0) {{
+    window.location.hash = url.hash;
+}}
+
 // Save the original fetch function
 const originalFetch = window.fetch;
 
@@ -176,7 +182,7 @@ async def extract():
 
     # Fetch the URL content
     try:
-        response = await get(base_url)
+        response = await get(parsed_url.geturl())
     except IOError as e:
         return jsonify({"error": str(e)}), 503
 
@@ -230,7 +236,7 @@ async def extract():
 
     # Patch fetch
     script_tag = soup.new_tag('script')
-    script_tag.string = FETCH.format(base_url=base_url)
+    script_tag.string = INJECT.format(url=parsed_url.geturl(), base_url=base_url)
     soup.head.append(script_tag)
 
     # Return the extracted elements as valid HTML
