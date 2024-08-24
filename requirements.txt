@@ -1,3 +1,6 @@
 bs4==0.0.2
 markdown2==2.4.13
 nest-asyncio==1.6.0
+quart==0.19.6
+requests_html==0.10.0
+lxml_html_clean==0.2.0

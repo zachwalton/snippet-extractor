@@ -17,4 +17,4 @@ EXPOSE 5001
 ENV PYTHONUNBUFFERED=1
 
 # Run the application
-CMD ["python", "app.py"]
+CMD ["python", "websnippet.py"]
