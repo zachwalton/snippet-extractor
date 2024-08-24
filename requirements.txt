@@ -4,3 +4,4 @@ nest-asyncio==1.6.0
 quart==0.19.6
 requests_html==0.10.0
 lxml_html_clean==0.2.0
+gunicorn==21.2.0

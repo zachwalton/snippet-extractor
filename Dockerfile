@@ -11,10 +11,10 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Make port 5001 available to the world outside this container
-EXPOSE 5001
+EXPOSE 8000
 
 # Define environment variable to ensure Python output is not buffered
 ENV PYTHONUNBUFFERED=1
 
 # Run the application
-CMD ["python", "websnippet.py"]
+CMD ["python", "app.py"]
