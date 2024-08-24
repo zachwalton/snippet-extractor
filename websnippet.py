@@ -4,6 +4,7 @@ from requests_html import AsyncHTMLSession
 from urllib.parse import urlparse, quote
 import asyncio
 import markdown2
+import os
 
 app = Quart(__name__)
 
@@ -15,6 +16,8 @@ This service allows you to extract specific elements from a web page based on CS
 It loads the page with Chromium and returns the page after JS rendering, so is more likely to be correct than basic scrapers.
 
 It also replaces relative links with links to the destination domain, proxied through [corsproxy.io](https://corsproxy.io) to work around CORS errors.
+
+Finally, it patches `window.fetch` to send relative requests to the upstream domain.
 
 ## Endpoints
 
@@ -85,6 +88,36 @@ STYLES = """
         text-decoration: underline;
     }
 </style>
+"""
+
+FETCH="""
+// Save the original fetch function
+const originalFetch = window.fetch;
+
+window.fetch = async function (input, init) {
+    // Determine the URL (input can be a Request object or a URL string)
+    let url = input instanceof Request ? input.url : input;
+
+    // Check if the URL is relative (doesn't start with http:// or https://)
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        // Get the current origin
+        const origin = window.location.origin;
+
+        // Construct the fully qualified URL
+        url = new URL(url, {base_url}).href;
+    }
+
+    // If input was a Request object, clone it with the new URL
+    if (input instanceof Request) {
+        input = new Request(url, input);
+    } else {
+        input = url;
+    }
+
+    // Call the original fetch function with the modified input
+    return originalFetch(input, init);
+};
+
 """
 
 async def get(url):
@@ -189,8 +222,13 @@ async def extract():
             script_tag.string = js
             soup.body.append(script_tag)  # Ensure the script is appended after all other scripts
 
+    # Patch fetch
+    script_tag = soup.new_tag('script')
+    script_tag.string = FETCH.format(base_url=base_url)
+    soup.body.append(script_tag)
+
     # Return the extracted elements as valid HTML
     return soup.prettify(), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=os.getenv("PORT", 5001))
