@@ -1,4 +1,4 @@
-from quart import Quart, request, jsonify, render_template_string
+from quart import Quart, request, jsonify, render_template_string, redirect
 from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
 from urllib.parse import urlparse, quote
@@ -335,6 +335,13 @@ async def get(url):
         raise IOError(f"Failed to fetch or render the page: {e}")
     finally:
         await session.close()
+
+@app.before_request
+def before_request():
+    if request.headers.get("X-Forwarded-Proto", "") == "http":
+        url = request.url.replace('http://', 'https://', 1)
+        code = 301
+        return redirect(url, code=code)
 
 @app.route('/')
 async def index():
