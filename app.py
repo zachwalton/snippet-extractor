@@ -9,7 +9,7 @@ import os
 app = Quart(__name__)
 
 README = """
-# Snippet Extractor
+# snip.info
 
 This service allows you to extract specific elements from a web page based on CSS selectors and optionally inject custom JavaScript. In addition to selected elements, parent elements are included (but not siblings).
 
@@ -318,7 +318,7 @@ async def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Snippet Extraction API</title>
+        <title>snip.info</title>
         {STYLES}
     </head>
     <body>
