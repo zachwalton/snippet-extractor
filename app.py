@@ -390,7 +390,6 @@ async def index():
     """
     return await render_template_string(full_html)
 
-
 @app.route('/api/v1/snippet', methods=['GET'])
 async def extract():
     url = request.args.get('url')
@@ -440,11 +439,17 @@ async def extract():
         except Exception as e:
             return jsonify({"error": f"Invalid selector: {selector}"}), 400
 
-    # Create a set to keep track of elements to preserve (and their parents)
+    # Create a set to keep track of elements to preserve (and their parents/children)
     elements_to_keep = set()
 
     for element in matched_elements:
         elements_to_keep.add(id(element))
+
+        # Add all children of the matched element
+        for child in element.descendants:
+            elements_to_keep.add(id(child))
+
+        # Add parents of the matched element
         parent = element
         while parent is not None and parent != soup:
             elements_to_keep.add(id(parent))
