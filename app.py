@@ -63,7 +63,7 @@ Enter the URL and add selectors or JS functions:
 </form>
 
 <div id="copy-link-container" style="margin-top:20px; display:none;">
-  <a href="#" id="copy-link">Link to API call...</a>
+  <a href="#" id="copy-link">Copy link...</a>
 </div>
 
 <iframe id="playground-result" style="width:100%; height:500px; margin-top:20px; display:none;"></iframe>
@@ -86,12 +86,37 @@ Enter the URL and add selectors or JS functions:
                           <button type="button" onclick="addField('${{type}}', this)">+</button><br><br>`;
     container.insertBefore(inputDiv, button.parentElement.nextSibling);
 
-    // Update the existing + button to remove it
-    button.remove();
+    // Ensure only the last field has a "+" button
+    updateAddButtons(container);
   }}
 
   function removeField(button) {{
-    button.parentElement.remove();
+    const parentDiv = button.parentElement;
+    const container = parentDiv.parentElement;
+    parentDiv.remove();
+
+    // Ensure only the last field has a "+" button
+    updateAddButtons(container);
+  }}
+
+  function updateAddButtons(container) {{
+    const divs = container.querySelectorAll('div');
+
+    divs.forEach((div, index) => {{
+      const plusButton = div.querySelector('button[onclick^="addField"]');
+
+      if (index === divs.length - 1) {{
+        if (!plusButton) {{
+          const addButton = document.createElement('button');
+          addButton.type = 'button';
+          addButton.textContent = '+';
+          addButton.setAttribute('onclick', `addField('${{container.id === 'selectors-container' ? 'selector' : 'js'}}', this)`);
+          div.appendChild(addButton);
+        }}
+      }} else {{
+        if (plusButton) plusButton.remove();
+      }}
+    }});
   }}
 
   function submitForm() {{
@@ -125,7 +150,7 @@ Enter the URL and add selectors or JS functions:
         const copyLinkContainer = document.getElementById('copy-link-container');
         const copyLink = document.getElementById('copy-link');
         copyLink.href = apiUrl;
-        copyLink.textContent = "Link to API call...";
+        copyLink.textContent = "Copy link...";
         copyLinkContainer.style.display = 'block';
       }})
       .catch(error => {{
@@ -148,7 +173,7 @@ Enter the URL and add selectors or JS functions:
       if (index === 0) {{
         document.getElementById('selector1').value = selector;
       }} else {{
-        addField('selector', document.querySelector('#selectors-container div:last-child button'), selector);
+        addField('selector', document.querySelector('#selectors-container div:last-child button[onclick^="addField"]'), selector);
       }}
     }});
 
@@ -156,9 +181,13 @@ Enter the URL and add selectors or JS functions:
       if (index === 0) {{
         document.getElementById('js1').value = script;
       }} else {{
-        addField('js', document.querySelector('#js-container div:last-child button'), script);
+        addField('js', document.querySelector('#js-container div:last-child button[onclick^="addField"]'), script);
       }}
     }});
+
+    // Ensure the buttons are correct after population
+    updateAddButtons(document.getElementById('selectors-container'));
+    updateAddButtons(document.getElementById('js-container'));
 
     if (url) {{
       submitForm();
@@ -357,11 +386,15 @@ async def extract():
 
     # Replace relative links with absolute links via corsproxy.io
     for tag in soup.find_all(['a', 'img', 'link', 'script'], href=True):
+        if tag['href'].startswith('http://') or tag['href'].startswith('https://'):
+            continue
         encoded_url = quote(base_url + tag['href'])
         tag['href'] = f"https://corsproxy.io/?{encoded_url}"
 
     for tag in soup.find_all(['img', 'script'], src=True):
         encoded_url = quote(base_url + tag['src'])
+        if tag['src'].startswith('http://') or tag['src'].startswith('https://'):
+            continue
         tag['src'] = f"https://corsproxy.io/?{encoded_url}"
 
     # Find elements matching the selectors
