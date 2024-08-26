@@ -461,6 +461,9 @@ async def extract():
     # Patch fetch and update query params
     script_tag = soup.new_tag('script')
     script_tag.string = INJECT.format(url=parsed_url.geturl(), base_url=base_url, query_params=query_params)
+    if soup.head is None:
+        return jsonify({"error": f"No head tag found in result. Make sure to specify 'head' as a selector, or a child element of <head>"}), 400
+
     soup.head.append(script_tag)
 
     # Return the extracted elements as valid HTML
