@@ -35,6 +35,139 @@ Finally, it patches `window.fetch` to send relative requests to the upstream dom
 
 Extract just the chart from [truebpm.dance](https://truebpm.dance), with custom JS to remove elements rendered by JS after page load: [here]({base_url}/api/v1/snippet?url=https%3A%2F%2Ftruebpm.dance%2F%23readSpeed%3D573%26song%3D1%252C2%252C3%252C4%252C%2520007%2520-%2520NI-NI&selector=script&selector=style&selector=canvas&script:(src=*)&js=document.querySelector(%27.footer%27).remove();&js=document.querySelector(%27.Content%27).remove();&js=document.querySelector(%27.App-header%27).remove();)
 
+#### Playground
+
+Enter the URL and add selectors or JS functions:
+
+<form id="playground-form">
+  <label for="url">URL:</label><br>
+  <input type="text" id="url" name="url" style="width:100%; padding:8px;" placeholder="Enter the URL"><br><br>
+
+  <div id="selectors-container">
+    <div>
+      <label for="selector1">Selector:</label><br>
+      <input type="text" id="selector1" name="selector" style="width:85%; padding:8px;" placeholder="Enter a CSS selector">
+      <button type="button" onclick="addField('selector', this)">+</button><br><br>
+    </div>
+  </div>
+
+  <div id="js-container">
+    <div>
+      <label for="js1">Js:</label><br>
+      <input type="text" id="js1" name="js" style="width:85%; padding:8px;" placeholder="Enter JavaScript code (optional)">
+      <button type="button" onclick="addField('js', this)">+</button><br><br>
+    </div>
+  </div>
+
+  <button type="button" onclick="submitForm()">Submit</button>
+</form>
+
+<div id="copy-link-container" style="margin-top:20px; display:none;">
+  <a href="#" id="copy-link">Link to API call...</a>
+</div>
+
+<iframe id="playground-result" style="width:100%; height:500px; margin-top:20px; display:none;"></iframe>
+<div id="loading-spinner" style="display:none; text-align:center; margin-top:20px;">
+  <p>Loading...</p>
+</div>
+
+<script>
+  let selectorCount = 1;
+  let jsCount = 1;
+
+  function addField(type, button, value = '') {{
+    const container = type === 'selector' ? document.getElementById('selectors-container') : document.getElementById('js-container');
+    const count = type === 'selector' ? ++selectorCount : ++jsCount;
+    
+    const inputDiv = document.createElement('div');
+    inputDiv.innerHTML = `<label for="${{type}}${{count}}">${{type.charAt(0).toUpperCase() + type.slice(1)}}:</label><br>
+                          <input type="text" id="${{type}}${{count}}" name="${{type}}" style="width:85%; padding:8px;" placeholder="Enter ${{type === 'selector' ? 'a CSS selector' : 'JavaScript code (optional)'}}" value="${{value}}">
+                          <button type="button" onclick="removeField(this)">-</button>
+                          <button type="button" onclick="addField('${{type}}', this)">+</button><br><br>`;
+    container.insertBefore(inputDiv, button.parentElement.nextSibling);
+
+    // Update the existing + button to remove it
+    button.remove();
+  }}
+
+  function removeField(button) {{
+    button.parentElement.remove();
+  }}
+
+  function submitForm() {{
+    document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('playground-result').style.display = 'none';
+    
+    const formData = new FormData(document.getElementById('playground-form'));
+    const url = formData.get('url');
+    const selectors = formData.getAll('selector').filter(Boolean).map(s => `selector=${{encodeURIComponent(s)}}`).join('&');
+    const js = formData.getAll('js').filter(Boolean).map(j => `js=${{encodeURIComponent(j)}}`).join('&');
+    const queryString = [selectors, js].filter(Boolean).join('&');
+    const apiUrl = `/api/v1/snippet?url=${{encodeURIComponent(url)}}&${{queryString}}`;
+
+    // Update query params in the address bar
+    const newUrl = `${{window.location.pathname}}?url=${{encodeURIComponent(url)}}&${{queryString}}`;
+    window.history.replaceState(null, '', newUrl);
+
+    fetch(apiUrl)
+      .then(response => response.text())
+      .then(html => {{
+        const iframe = document.getElementById('playground-result');
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        document.getElementById('loading-spinner').style.display = 'none';
+        iframe.style.display = 'block';
+
+        // Show and update the copy link
+        const copyLinkContainer = document.getElementById('copy-link-container');
+        const copyLink = document.getElementById('copy-link');
+        copyLink.href = apiUrl;
+        copyLink.textContent = "Link to API call...";
+        copyLinkContainer.style.display = 'block';
+      }})
+      .catch(error => {{
+        console.error('Error:', error);
+        document.getElementById('loading-spinner').style.display = 'none';
+      }});
+  }}
+
+  function autoPopulateFields() {{
+    const urlParams = new URLSearchParams(window.location.search);
+    const url = urlParams.get('url');
+    const selectors = urlParams.getAll('selector');
+    const js = urlParams.getAll('js');
+
+    if (url) {{
+      document.getElementById('url').value = url;
+    }}
+
+    selectors.forEach((selector, index) => {{
+      if (index === 0) {{
+        document.getElementById('selector1').value = selector;
+      }} else {{
+        addField('selector', document.querySelector('#selectors-container div:last-child button'), selector);
+      }}
+    }});
+
+    js.forEach((script, index) => {{
+      if (index === 0) {{
+        document.getElementById('js1').value = script;
+      }} else {{
+        addField('js', document.querySelector('#js-container div:last-child button'), script);
+      }}
+    }});
+
+    if (url) {{
+      submitForm();
+    }}
+  }}
+
+  window.onload = autoPopulateFields;
+</script>
+
 [source](https://github.com/zachwalton/snippet-extractor)
 
 """
@@ -42,50 +175,80 @@ Extract just the chart from [truebpm.dance](https://truebpm.dance), with custom 
 STYLES = """
 <style>
     body {
-        font-family: Arial, sans-serif;
+        font-family: 'Helvetica Neue', Arial, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #f4f4f4;
+        background-color: #fafafa;
+        color: #222;
+        line-height: 1.8;
+        font-size: 16px;
+    }
+
+    .container {
+        width: 75%;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    h1, h2, h3 {
+        color: #2c3e50;
+        text-align: center;
+        margin: 1.5em 0 0.75em;
+        font-weight: 600;
+    }
+
+    h1 {
+        border-bottom: 3px solid #2c3e50;
+        padding-bottom: 12px;
+        margin-bottom: 0.75em;
+        font-size: 2.5em;
+    }
+
+    p, ul, ol {
+        font-size: 1.125em;
+        margin: 1em 0;
         color: #333;
+    }
+
+    code {
+        background-color: #f0f0f0;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 1em;
+        color: #c0392b;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    pre {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 15px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 1em;
         line-height: 1.6;
     }
-    .container {
-        width: 80%;
-        margin: auto;
-        overflow: hidden;
-    }
-    h1, h2, h3 {
-        color: #333;
-        text-align: center;
-        margin-top: 1.5em;
-    }
-    h1 {
-        border-bottom: 2px solid #333;
-        padding-bottom: 10px;
-    }
-    p, ul, ol {
-        font-size: 1.1em;
-        margin: 20px 0;
-    }
-    code {
-        background-color: #eaeaea;
-        padding: 2px 5px;
-        border-radius: 3px;
-        font-size: 1.1em;
-    }
-    pre {
-        background-color: #333;
-        color: #f4f4f4;
-        padding: 10px;
-        border-radius: 5px;
-        overflow-x: auto;
-    }
+
     a {
-        color: #1a73e8;
+        color: #2980b9;
         text-decoration: none;
+        transition: color 0.3s ease;
     }
+
     a:hover {
+        color: #1a5276;
         text-decoration: underline;
+    }
+
+    ul, ol {
+        padding-left: 40px;
+    }
+
+    ul li, ol li {
+        margin-bottom: 10px;
     }
 </style>
 """
@@ -137,7 +300,7 @@ async def get(url):
     session = AsyncHTMLSession()
     try:
         response = await session.get(url)
-        await response.html.arender()
+        await response.html.arender(timeout=60)
         return response
     except Exception as e:
         raise IOError(f"Failed to fetch or render the page: {e}")
