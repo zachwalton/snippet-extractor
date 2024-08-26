@@ -1,4 +1,4 @@
-from quart import Quart, request, jsonify, render_template_string, redirect
+from quart import Quart, request, jsonify, render_template_string, redirect, url_for
 from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
 from urllib.parse import urlparse, quote
@@ -357,6 +357,7 @@ async def index():
     <!DOCTYPE html>
     <html lang="en">
     <head>
+        <link rel="icon" href="{ url_for('static', filename='favicon.ico') }">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>snip.info</title>
