@@ -33,7 +33,7 @@ Finally, it patches `window.fetch` to send relative requests to the upstream dom
 
 #### Live Example
 
-Extract just the chart from [truebpm.dance](https://truebpm.dance), with custom JS to remove elements rendered by JS after page load: [here]({base_url}/api/v1/snippet?url=https%3A%2F%2Ftruebpm.dance%2F%23readSpeed%3D573%26song%3D1%252C2%252C3%252C4%252C%2520007%2520-%2520NI-NI&selector=script&selector=style&selector=canvas&script:(src=*)&js=document.querySelector(%27.footer%27).remove();&js=document.querySelector(%27.Content%27).remove();&js=document.querySelector(%27.App-header%27).remove();)
+[Here!](/?url=https%3A%2F%2Ftruebpm.dance%2F%23readSpeed%3D573%26song%3D1%252C2%252C3%252C4%252C%2520007%2520-%2520NI-NI&selector=script&selector=style&selector=canvas&js=document.querySelector(%27.footer%27).remove()%3B&js=document.querySelector(%27.Content%27).remove()%3B&js=document.querySelector(%27.App-header%27).remove()%3B)
 
 #### Playground
 
