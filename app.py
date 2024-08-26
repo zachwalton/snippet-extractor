@@ -29,7 +29,7 @@ Finally, it patches `window.fetch` to send relative requests to the upstream dom
 - `js` (optional, repeating): Custom JavaScript function(s) to run after all other scripts on the page
 
 #### Example Request
-`GET /api/v1/snippet?url=http://example.com&selector=.header&js=document.querySelector('.footer').remove();`
+`GET /api/v1/snippet?url=http://example.com&selector=.header&js=document.querySelector('.footer').remove()`
 
 #### Live Example
 
@@ -198,7 +198,6 @@ Enter the URL and add selectors or JS functions:
 </script>
 
 [source](https://github.com/zachwalton/snippet-extractor)
-
 """
 
 STYLES = """
@@ -449,15 +448,16 @@ async def extract():
         for child in element.descendants:
             elements_to_keep.add(id(child))
 
-        # Add parents of the matched element
         parent = element
         while parent is not None and parent != soup:
+            # Add parents of the matched element
             elements_to_keep.add(id(parent))
             parent = parent.parent
 
     # Remove all elements not in the elements_to_keep set
     for element in soup.find_all(True):
-        if id(element) not in elements_to_keep:
+        if id(element) not in elements_to_keep \
+                and element.name not in ("head", "body", "html"):
             element.decompose()
 
     # If js query parameter is provided, add it as a script at the end of the body
@@ -470,9 +470,6 @@ async def extract():
     # Patch fetch and update query params
     script_tag = soup.new_tag('script')
     script_tag.string = INJECT.format(url=parsed_url.geturl(), base_url=base_url, query_params=query_params)
-    if soup.head is None:
-        return jsonify({"error": f"No head tag found in result. Make sure to specify 'head' as a selector, or a child element of <head>"}), 400
-
     soup.head.append(script_tag)
 
     # Return the extracted elements as valid HTML
