@@ -6,7 +6,7 @@ It loads the page with Chromium and returns the page after JS rendering, so is m
 
 It also replaces relative links with links to the destination domain, proxied through [corsproxy.io](https://corsproxy.io) to work around CORS errors.
 
-Finally, it patches `window.fetch` to send relative requests to the upstream domain.
+Finally, it patches `window.fetch` to send relative requests to the upstream domain, and has some other neat tricks like loading `window.location.hash` and `window.location.search` from the upstream URL for triggering behavior in PWAs.
 
 ## Endpoints
 

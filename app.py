@@ -9,7 +9,7 @@ import os
 app = Quart(__name__)
 
 README = """
-# snip.info
+# [snip.info](/)
 
 This service allows you to extract specific elements from a web page based on CSS selectors and optionally inject custom JavaScript. In addition to selected elements, parent elements are included (but not siblings).
 
@@ -17,7 +17,7 @@ It loads the page with Chromium and returns the page after JS rendering, so is m
 
 It also replaces relative links with links to the destination domain, proxied through [corsproxy.io](https://corsproxy.io) to work around CORS errors.
 
-Finally, it patches `window.fetch` to send relative requests to the upstream domain, and has some other neat tricks like loading window.location.hash from the upstream URL for triggering behavior in PWAs.
+Finally, it patches `window.fetch` to send relative requests to the upstream domain, and has some other neat tricks like loading `window.location.hash` and `window.location.search` from the upstream URL for triggering behavior in PWAs.
 
 ## Endpoints
 
@@ -294,6 +294,21 @@ if (url.hash.length > 0) {{
     window.location.hash = url.hash;
 }}
 
+// Update the query params in the URL after page rendering
+const newQueryParams = "{query_params}";
+if (newQueryParams) {{
+    const currentUrl = new URL(window.location);
+    const params = new URLSearchParams(newQueryParams);
+
+    // Merge the new params with the current ones
+    for (const [key, value] of params.entries()) {{
+        currentUrl.searchParams.set(key, value);
+    }}
+
+    // Update the browser's address bar without reloading the page
+    window.history.replaceState(null, '', currentUrl.toString());
+}}
+
 // Save the original fetch function
 const originalFetch = window.fetch;
 
@@ -326,7 +341,6 @@ window.fetch = async function (input, init) {{
     // Call the original fetch function with the modified input
     return originalFetch(input, init);
 }};
-
 """
 
 async def get(url):
@@ -378,6 +392,7 @@ async def extract():
     url = request.args.get('url')
     selectors = request.args.getlist('selector')
     js_code = request.args.getlist('js')  # Get the JavaScript code from query parameter
+    query_params = request.query_string.decode()  # Get the full query string for injection
 
     if not url or not selectors:
         return jsonify({"error": "URL and at least one selector are required"}), 400
@@ -443,9 +458,9 @@ async def extract():
             script_tag.string = js
             soup.body.append(script_tag)  # Ensure the script is appended after all other scripts
 
-    # Patch fetch
+    # Patch fetch and update query params
     script_tag = soup.new_tag('script')
-    script_tag.string = INJECT.format(url=parsed_url.geturl(), base_url=base_url)
+    script_tag.string = INJECT.format(url=parsed_url.geturl(), base_url=base_url, query_params=query_params)
     soup.head.append(script_tag)
 
     # Return the extracted elements as valid HTML
