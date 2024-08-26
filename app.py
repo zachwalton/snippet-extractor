@@ -350,8 +350,12 @@ async def get(url):
         response = await session.get(url)
         await response.html.arender(timeout=60)
         return response
+    except asyncio.TimeoutError:
+        raise IOError("Timeout Error: The page took too long to load. Please try again later.")
+    except ConnectionError:
+        raise IOError("Connection Error: Unable to establish a connection. Please check your internet connection or the URL.")
     except Exception as e:
-        raise IOError(f"Failed to fetch or render the page: {e}")
+        raise IOError(f"An unexpected error occurred while fetching or rendering the page: {e}")
     finally:
         await session.close()
 
