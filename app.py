@@ -207,68 +207,73 @@ STYLES = """
         font-family: 'Helvetica Neue', Arial, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #fafafa;
-        color: #222;
-        line-height: 1.8;
+        background-color: #f4f4f4;
+        color: #2c2c2c;
+        line-height: 1.75;
         font-size: 16px;
     }
 
     .container {
-        width: 75%;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #fff;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
+        max-width: 900px;
+        margin: 60px auto;
+        padding: 40px;
+        background-color: #ffffff;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        border: 1px solid #e1e1e1;
     }
 
     h1, h2, h3 {
-        color: #2c3e50;
+        color: #1c1c1c;
         text-align: center;
-        margin: 1.5em 0 0.75em;
-        font-weight: 600;
+        margin: 1.5em 0 0.5em;
+        font-weight: 700;
+        letter-spacing: 0.05em;
     }
 
     h1 {
-        border-bottom: 3px solid #2c3e50;
-        padding-bottom: 12px;
-        margin-bottom: 0.75em;
-        font-size: 2.5em;
+        border-bottom: 5px solid #1c1c1c;
+        padding-bottom: 15px;
+        margin-bottom: 1em;
+        font-size: 2.75em;
+        line-height: 1.2;
     }
 
     p, ul, ol {
         font-size: 1.125em;
         margin: 1em 0;
-        color: #333;
+        color: #3c3c3c;
+        line-height: 1.8;
     }
 
     code {
-        background-color: #f0f0f0;
-        padding: 4px 8px;
+        background-color: #f2f2f2;
+        padding: 8px 12px;
         border-radius: 4px;
         font-size: 1em;
-        color: #c0392b;
+        color: #d32f2f;
         font-family: 'Courier New', Courier, monospace;
     }
 
     pre {
-        background-color: #2c3e50;
-        color: #ecf0f1;
-        padding: 15px;
-        border-radius: 8px;
+        background-color: #2c2c2c;
+        color: #f1f1f1;
+        padding: 20px;
+        border-radius: 10px;
         overflow-x: auto;
         font-size: 1em;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
     a {
-        color: #2980b9;
+        color: #0056b3;
         text-decoration: none;
-        transition: color 0.3s ease;
+        font-weight: 600;
+        transition: color 0.3s ease, text-decoration 0.3s ease;
     }
 
     a:hover {
-        color: #1a5276;
+        color: #003c82;
         text-decoration: underline;
     }
 
@@ -277,7 +282,7 @@ STYLES = """
     }
 
     ul li, ol li {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 </style>
 """
