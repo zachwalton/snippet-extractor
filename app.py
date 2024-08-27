@@ -294,13 +294,13 @@ STYLES = """
 
 INJECT="""
 // First replace the hash with the hash from the upstream URL, if it exists
-let url = new URL("{url}");
+var url = new URL("{url}");
 if (url.hash.length > 0) {{
     window.location.hash = url.hash;
 }}
 
 // Update the query params in the URL after page rendering
-const newQueryParams = "{query_params}";
+var newQueryParams = "{query_params}";
 if (newQueryParams) {{
     const currentUrl = new URL(window.location);
     const params = new URLSearchParams(newQueryParams);
@@ -315,11 +315,13 @@ if (newQueryParams) {{
 }}
 
 // Save the original fetch function
-const originalFetch = window.fetch;
+if (typeof originalFetch === "undefined") {{
+    var originalFetch = window.fetch;
+}}
 
 window.fetch = async function (input, init) {{
     // Determine the URL (input can be a Request object or a URL string)
-    let url = input instanceof Request ? input.url : input;
+    var url = input instanceof Request ? input.url : input;
 
     // Check if the URL is relative (doesn't start with http:// or https://)
     if (!url.startsWith('http://') && !url.startsWith('https://')) {{
