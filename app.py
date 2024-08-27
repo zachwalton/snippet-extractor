@@ -1,12 +1,16 @@
-from quart import Quart, request, jsonify, render_template_string, redirect, url_for
+from quart import Quart, request, jsonify, render_template_string, redirect, url_for, request, Response
 from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse, quote, unquote, urljoin
+import aiohttp
 import asyncio
 import markdown2
 import os
+import re
 
 app = Quart(__name__)
+
+url_pattern = re.compile(r'url\((["\']?)([^"\')]+)(["\']?)\)')
 
 README = """
 # [snip.info](/)
@@ -15,7 +19,7 @@ This service allows you to extract specific elements from a web page based on CS
 
 It loads the page with Chromium and returns the page after JS rendering, so is more likely to be correct than basic scrapers.
 
-It also replaces relative links with links to the destination domain, proxied through [corsproxy.io](https://corsproxy.io) to work around CORS errors.
+It also replaces relative links with links to the destination domain, proxied through `/api/v1/proxy` to work around CORS errors and intercept relative URLs in CSS.
 
 Finally, it patches `window.fetch` to send relative requests to the upstream domain, and has some other neat tricks like loading `window.location.hash` and `window.location.search` from the upstream URL for triggering behavior in PWAs.
 
@@ -326,8 +330,8 @@ window.fetch = async function (input, init) {{
         // Encode the full URL
         const encodedUrl = encodeURIComponent(fullUrl);
 
-        // Construct the final URL with corsproxy
-        url = `https://corsproxy.io/?${{encodedUrl}}`;
+        // Construct the final URL with /api/v1/proxy
+        url = `/api/v1/proxy?url=${{encodedUrl}}`;
     }}
 
     // If input was a Request object, clone it with the new URL
@@ -389,6 +393,47 @@ async def index():
     """
     return await render_template_string(full_html)
 
+def is_likely_css(content):
+    # Simple heuristic: Check if the content has common CSS syntax
+    return 'background:url' in content
+
+@app.route('/api/v1/proxy')
+async def proxy():
+    url = unquote(request.args.get('url'))
+
+    # Prepare headers, data, and method
+    headers = {key: value for (key, value) in request.headers if key != 'Host'}
+    data = await request.get_data()
+    method = request.method
+
+    # Forward the request to the target server
+    async with aiohttp.ClientSession() as session:
+        async with session.request(method, url, headers=headers, data=data) as resp:
+            response_data = await resp.read()
+
+            # Create a response with the data from the target server
+            response = Response(response_data, status=resp.status)
+            response.headers.update({key: value for (key, value) in resp.headers.items() if key != 'Content-Encoding'})
+  
+    #content = await response.get_data()
+    #data = str(content)
+    # Check if the content is likely CSS
+    # if is_likely_css(data):
+    #   # Get the base URL for resolving relative paths
+    #    uri = urlparse(url)
+    #    base_url = f'{uri.scheme}://{uri.netloc}'
+    #
+    #   def replace_relative_url(match):
+    #       return f'url({urljoin(base_url, match.group(2))})'
+
+        # Replace relative URLs with absolute URLs using the precompiled pattern
+    #   processed_css = url_pattern.sub(replace_relative_url, data)
+
+    #   return processed_css
+
+    return response
+
+
 @app.route('/api/v1/snippet', methods=['GET'])
 async def extract():
     url = request.args.get('url')
@@ -414,18 +459,20 @@ async def extract():
     except Exception as e:
         return jsonify({"error": f"Failed to parse HTML content: {str(e)}"}), 500
 
-    # Replace relative links with absolute links via corsproxy.io
+    # Replace relative links with absolute links via /api/v1/proxy
     for tag in soup.find_all(['a', 'img', 'link', 'script'], href=True):
         if tag['href'].startswith('http://') or tag['href'].startswith('https://'):
             continue
         encoded_url = quote(base_url + tag['href'])
-        tag['href'] = f"https://corsproxy.io/?{encoded_url}"
+        tag['href'] = f"/api/v1/proxy?url={encoded_url}"
 
     for tag in soup.find_all(['img', 'script'], src=True):
         encoded_url = quote(base_url + tag['src'])
         if tag['src'].startswith('http://') or tag['src'].startswith('https://'):
             continue
-        tag['src'] = f"https://corsproxy.io/?{encoded_url}"
+        tag['src'] = f"/api/v1/proxy?url={encoded_url}"
+        if tag.get('srcset'):
+            tag['srcset'] = None
 
     # Find elements matching the selectors
     matched_elements = []
