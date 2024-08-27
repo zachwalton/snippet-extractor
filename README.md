@@ -20,3 +20,20 @@ Finally, it patches `window.fetch` to send relative requests to the upstream dom
 #### Example Request
 
 `GET /api/v1/snippet?url=http://example.com&selector=.header&js=document.querySelector('.footer').remove();`
+
+## Development
+
+To develop this site, you need `snip.localdev` to resolve locally and support `*.snip.localdev` wildcard lookups for proxying to work.
+
+On MacOS, install/configure dnsmasq as follows (adjust the path to your homebrew accordingly):
+
+```bash
+➜ brew install dnsmasq
+➜ cat /opt/homebrew/etc/dnsmasq.conf
+address=/.snip.localdev/127.0.0.1
+address=/snip.localdev/127.0.0.1
+➜ cat /etc/resolver/snip.localdev
+nameserver 127.0.0.1
+```
+
+Then `sudo brew services restart dnsmasq`. You should then be able to run `pip install -r requirements.txt` and `python app.py` and browse to http://snip.localdev:5001.
